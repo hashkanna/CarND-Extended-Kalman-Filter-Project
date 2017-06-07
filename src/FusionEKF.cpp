@@ -37,6 +37,25 @@ FusionEKF::FusionEKF() {
     * Set the process and measurement noises
   */
 
+  // measurement matrix - laser
+  // create H Matrix to project from 2D observation to 4D space
+  // 0's for velocity and 1's for position because lidar does not capture velocity
+  H_laser_ << 1, 0, 0, 0,
+            0, 1, 0, 0;
+
+  // initial transition matrix F_
+  ekf_.F_ = MatrixXd(4, 4);
+  ekf_.F_ << 1, 0, 1, 0,
+		  0, 1, 0, 1,
+		  0, 0, 1, 0,
+		  0, 0, 0, 1;
+
+  //state covariance matrix P
+  ekf_.P_ = MatrixXd(4, 4);
+  ekf_.P_ << 1, 0, 0, 0,
+		  0, 1, 0, 0,
+		  0, 0, 1000, 0,
+		  0, 0, 0, 1000;
 
 }
 
