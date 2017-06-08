@@ -63,6 +63,32 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   double vx = x_[2];
   double vy = x_[3];
 
-  // polar coordinates
+  // radar measurement update - cartesian to polar coordinates
+  VectorXd hx(3);
+  double rho = sqrt(px * px + py * py);
+  double phi = atan2(py, px);
+  double rhodot;
+  if (fabs(rho) < 0.0001) { // handle divide by zero condition
+    rhodot = 0;
+  } else {
+    rhodot = (px * vx + py * vy) / rho;
+  }
+  hx << rho, phi, rhodot;
+  VectorXd y = z - hx;
 
+  // normalize phi angle to be between -pi and pi. Kalman Filter expects it to be small
+  if (y[1] < -M_PI) {
+      y[1] = y[1] + 2 * M_PI;
+  }
+  if (y[1] > M_PI) {
+      y[1] = y[1] - 2 * M_PI;
+  }
+
+  MatrixXd S = H_ * P_ * H_.transpose() + R_;
+  MatrixXd K = P_ * H_.transpose() * S.inverse();
+
+  //refresh estimate
+  x_ = x_ + (K * y);
+  MatrixXd I = MatrixXd::Identity(x_.size(), x_.size());
+  P_ = (I - K * H_) * P_;
 }
